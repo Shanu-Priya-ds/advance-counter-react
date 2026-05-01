@@ -1,18 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
+import type { CountHistory } from "../types/CountHistory";
 
 function AdvancedCounter() {
 
     //define the state
     const [count, setCount] = useState(0);
-    const [countHistory, setCountHistory] = useState<number[]>(()=>{
+    const [status, setStatus] = useState("");
+    const [countHistory, setCountHistory] = useState<CountHistory[]>(()=>{
         const localStorageHistoryCount = localStorage.getItem("countHistory");
-        const intialCountHistory:number[] = localStorageHistoryCount ?  JSON.parse(localStorageHistoryCount): [];
+        const intialCountHistory:CountHistory[] = localStorageHistoryCount ?  JSON.parse(localStorageHistoryCount): [];
         return intialCountHistory;
     });
     const [stepValue, setSetValue] = useState(1);
-    let countRef = useRef(count); //need this refrence to have the latest count in arrow key function.
+    let countRef = useRef(count); //need this refrence to have the latest count in arrowkey function.
     //since the handlers are attached at global level during component mount, which always refers to the intial value in the state.
-    //so, arraow key function does the increment/decrement with stale count data. To avoid this, used useRef hook to have the latest value of count
+    //so, arrowkey function does the increment/decrement with stale count data. To avoid this, used useRef hook to have the latest value of count
     //which can be accessed by global listeners .And update this ref whenever count state gets updates
     let stepValueRef = useRef(stepValue);
 
@@ -30,16 +32,15 @@ function AdvancedCounter() {
     }
 
     const handleReset = () => {
-        //reset counter and history
+        //reset count and history
         setCount(0);
         setCountHistory([]);
+        localStorage.setItem("countHistory","");
     }
 
     const handleArrowUpKey = (e: Event) => {
-        console.log(e instanceof KeyboardEvent);
         if (e instanceof KeyboardEvent && !(e.target instanceof HTMLInputElement)) {
             let keyboarEvent: KeyboardEvent = e as KeyboardEvent;
-            console.log(keyboarEvent.key)
             if (keyboarEvent.key === "ArrowUp")
                 incrementCounter();
         }
@@ -47,22 +48,26 @@ function AdvancedCounter() {
 
 
     const handleArrowDownKey = (e: Event) => {
-        console.log(e instanceof KeyboardEvent);
-        console.log(e.target instanceof HTMLInputElement)
         if (e instanceof KeyboardEvent && !(e.target instanceof HTMLInputElement)) {//don't execute increment/decrement counter when the focus is on any of the input elemen 
             let keyboarEvent: KeyboardEvent = e as KeyboardEvent;
-            console.log(keyboarEvent.key)
             if (keyboarEvent.key === "ArrowDown")
                 decrementCounter();
         }
     }
 
+    const updateCountHistory=(newCount:number)=>{
+        const countObj:CountHistory ={
+            id:crypto.randomUUID(),
+            count:newCount
+        }
+        setCountHistory(prevHistory => [...prevHistory, countObj]);
+        
+    }
     const decrementCounter = () => {
         console.log("Decrementing counter and update history")
         const newCount = countRef.current - stepValueRef.current;
         setCount(newCount);
-        setCountHistory(prevHistory => [...prevHistory, newCount]);
-        console.log(`Count History Array: ${countHistory}`);
+       updateCountHistory(newCount);
         countRef.current = newCount;
     }
 
@@ -71,8 +76,7 @@ function AdvancedCounter() {
 
         let newCount = countRef.current + stepValueRef.current;
         setCount(newCount);
-        setCountHistory(prevHistory => [...prevHistory, newCount]);
-        console.log(`Count History Array: ${countHistory}`);
+        updateCountHistory(newCount);
         countRef.current = newCount;
     }
 
@@ -87,10 +91,16 @@ function AdvancedCounter() {
     }, []);
 
     useEffect(() => {
-        countRef.current = count;
-        localStorage.setItem("countHistory", JSON.stringify(countHistory));
+        setStatus("Saving to LocalStorage...");
+        setTimeout(()=>{localStorage.setItem("countHistory", JSON.stringify(countHistory));
+             setStatus("Changes Saved.");
+        },500)
+       
     }, [count])
 
+    useEffect(()=>{
+        countRef.current = count;
+    },[count]);
 
     useEffect(() => {
         stepValueRef.current = stepValue;
@@ -107,9 +117,10 @@ function AdvancedCounter() {
             <input type="number" min={1} onChange={updateStepValue} value={stepValue}></input>
             <></>
         </div>
+        <span>{status}</span>
         <div>
             <h5>Count History: {countHistory.length}</h5>
-            {countHistory.map((history) => <div>{history}</div>)}
+            {countHistory.map((history) => <div key={history.id}>{history.count}</div>)}
         </div>
         <span>Use ArrowUp to increment and ArrowDown to decrement.</span>
     </>)
