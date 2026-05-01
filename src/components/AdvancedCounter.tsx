@@ -4,7 +4,11 @@ function AdvancedCounter() {
 
     //define the state
     const [count, setCount] = useState(0);
-    const [countHistory, setCountHistory] = useState<number[]>([]);
+    const [countHistory, setCountHistory] = useState<number[]>(()=>{
+        const localStorageHistoryCount = localStorage.getItem("countHistory");
+        const intialCountHistory:number[] = localStorageHistoryCount ?  JSON.parse(localStorageHistoryCount): [];
+        return intialCountHistory;
+    });
     const [stepValue, setSetValue] = useState(1);
     let countRef = useRef(count); //need this refrence to have the latest count in arrow key function.
     //since the handlers are attached at global level during component mount, which always refers to the intial value in the state.
@@ -32,35 +36,31 @@ function AdvancedCounter() {
     }
 
     const handleArrowUpKey = (e: Event) => {
-        console.log(e instanceof KeyboardEvent );
-           if (e instanceof KeyboardEvent && !(e.target instanceof HTMLInputElement)){
-           let keyboarEvent:KeyboardEvent =  e as KeyboardEvent;
-           console.log(keyboarEvent.key)
-           if(keyboarEvent.key === "ArrowUp" )
-            incrementCounter();
+        console.log(e instanceof KeyboardEvent);
+        if (e instanceof KeyboardEvent && !(e.target instanceof HTMLInputElement)) {
+            let keyboarEvent: KeyboardEvent = e as KeyboardEvent;
+            console.log(keyboarEvent.key)
+            if (keyboarEvent.key === "ArrowUp")
+                incrementCounter();
         }
-     }
+    }
 
 
     const handleArrowDownKey = (e: Event) => {
-        console.log(e instanceof KeyboardEvent );
+        console.log(e instanceof KeyboardEvent);
         console.log(e.target instanceof HTMLInputElement)
-         if (e instanceof KeyboardEvent && !(e.target instanceof HTMLInputElement)){//don't execute increment/decrement counter when the focus is on any of the input elemen 
-           let keyboarEvent:KeyboardEvent =  e as KeyboardEvent;
-           console.log(keyboarEvent.key)
-           if(keyboarEvent.key === "ArrowDown" )
-            decrementCounter();
+        if (e instanceof KeyboardEvent && !(e.target instanceof HTMLInputElement)) {//don't execute increment/decrement counter when the focus is on any of the input elemen 
+            let keyboarEvent: KeyboardEvent = e as KeyboardEvent;
+            console.log(keyboarEvent.key)
+            if (keyboarEvent.key === "ArrowDown")
+                decrementCounter();
         }
     }
 
     const decrementCounter = () => {
         console.log("Decrementing counter and update history")
-         console.log("count" +countRef.current);
-        
-        setCount(countRef.current  - stepValueRef.current);
-         console.log("step value :" + stepValueRef.current);
-       
-        const newCount = countRef.current  - stepValueRef.current;
+        const newCount = countRef.current - stepValueRef.current;
+        setCount(newCount);
         setCountHistory(prevHistory => [...prevHistory, newCount]);
         console.log(`Count History Array: ${countHistory}`);
         countRef.current = newCount;
@@ -68,11 +68,9 @@ function AdvancedCounter() {
 
     const incrementCounter = () => {
         console.log("Incrementing counter and update history")
-        console.log("count" +countRef.current);
-        let newCount = countRef.current  + stepValueRef.current;
-        console.log("step value :" + stepValueRef.current);
+
+        let newCount = countRef.current + stepValueRef.current;
         setCount(newCount);
-        console.log(newCount);
         setCountHistory(prevHistory => [...prevHistory, newCount]);
         console.log(`Count History Array: ${countHistory}`);
         countRef.current = newCount;
@@ -80,20 +78,21 @@ function AdvancedCounter() {
 
     useEffect(() => {
         console.log("inside useeffect");
-       document.addEventListener("keydown" ,handleArrowDownKey);
+        document.addEventListener("keydown", handleArrowDownKey);
         document.addEventListener("keyup", handleArrowUpKey)
         return (() => {
-           document.removeEventListener("KeyDown",handleArrowDownKey);
+            document.removeEventListener("KeyDown", handleArrowDownKey);
             document.removeEventListener("Keyup", handleArrowUpKey);
         })
     }, []);
 
-    useEffect(()=>{
+    useEffect(() => {
         countRef.current = count;
-    },[count])
+        localStorage.setItem("countHistory", JSON.stringify(countHistory));
+    }, [count])
 
 
-    useEffect(()=>{
+    useEffect(() => {
         stepValueRef.current = stepValue;
     }, [stepValue]);
 
