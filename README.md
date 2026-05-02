@@ -1,75 +1,54 @@
-# React + TypeScript + Vite
+# Advanced Counter
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + TypeScript counter application built with Vite that demonstrates several intermediate React patterns: `useState`, `useRef`, `useEffect`, localStorage persistence, and global keyboard event handling.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Increment / Decrement** — buttons adjust the counter by the configured step value.
+- **Configurable step value** — change how much each increment or decrement adds or subtracts.
+- **Keyboard shortcuts** — press `ArrowUp` to increment and `ArrowDown` to decrement from anywhere on the page (ignored when an input field has focus).
+- **Count history** — every change is recorded and displayed as a running list.
+- **LocalStorage persistence** — count, step value, and full history survive page refresh. Writes are debounced by 500 ms to avoid excessive storage calls.
+- **Save status indicator** — a status message shows when a save is in progress and when it completes.
+- **Reset** — clears the count, history, and the localStorage entry in one click.
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+| Tool | Purpose |
+|---|---|
+| React 19 | UI and state management |
+| TypeScript | Type safety |
+| Vite | Dev server and build tool |
+| React Compiler | Automatic memoization |
 
-Note: This will impact Vite dev & build performances.
+## Project Structure
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+  components/
+    AdvancedCounter.tsx   # Main counter component
+  types/
+    CountHistory.tsx      # CountHistory and Count interfaces
+  App.tsx
+  main.tsx
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Key Implementation Notes
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### `useRef` for stale closure avoidance
+Global `keydown`/`keyup` listeners are registered once on mount via `useEffect([], [])`. Because they close over the initial state values, `countRef` and `stepValueRef` are used to give those handlers access to the current count and step value without re-registering the listeners on every change.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Debounced localStorage writes
+A `useEffect` that watches `count` sets a 500 ms timeout before writing to localStorage. The cleanup function clears the timeout, so only the final value in a burst of rapid changes is actually written.
+
+### Immutable history updates
+`updateCountInObj` spreads both the top-level `CountHistory` object and the inner `counts` array before appending, ensuring the state update is always a new object reference and React re-renders correctly.
+
+## Getting Started
+
+```bash
+npm install
+npm run dev
 ```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
