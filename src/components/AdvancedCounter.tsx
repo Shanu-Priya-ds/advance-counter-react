@@ -43,6 +43,7 @@ function AdvancedCounter() {
     const handleReset = () => {
         setCount(0);
         setCountHistory(null);
+        setStepValue(1);
         localStorage.setItem("countHistory", "");
     }
 
@@ -148,24 +149,26 @@ function AdvancedCounter() {
         stepValueRef.current = stepValue;
     }, [stepValue]);
 
-    return (<>
+    return (<div className="border-solid border-white m-5">
         <h3>Counter</h3>
         <h2>Current Count: {count}</h2>
-        <button type="button" onClick={handleDecrement} >Decrement</button>
-        <button type="button" onClick={handleIncrement} >Increment</button>
-        <button type="button" onClick={handleReset}>Reset</button>
-        <div>
+        <div className="flex gap-3 justify-center p-5">
+        <button type="button" className=" bg-white cursor-pointer p-2 rounded-sm" onClick={handleDecrement} >Decrement</button>
+        <button type="button" className=" bg-white  cursor-pointer p-2 rounded-sm" onClick={handleIncrement} >Increment</button>
+        <button type="button" className=" bg-red-400  cursor-pointer p-2 rounded-sm" onClick={handleReset}>Reset</button>
+        </div>
+        <div className="m-2">
             <label>Step Value:</label>
-            <input type="number" min={1} onChange={updateStepValue} value={stepValue}></input>
+            <input type="number" min={1} className=" m-3 w-15 bg-white" onChange={updateStepValue} value={stepValue}></input>
             <></>
         </div>
-        <span>{status}</span>
-        <div>
+        <i>{status}</i>
+        <div className="m-10">
             <h5>Count History: {countHistory?.counts?.length}</h5>
             {countHistory?.counts?.map((history) => <div key={history.id}>{history.count}</div>)}
         </div>
         <span>Use ArrowUp to increment and ArrowDown to decrement.</span>
-    </>)
+    </div>)
 }
 
 export default AdvancedCounter;
